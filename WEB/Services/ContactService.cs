@@ -26,7 +26,7 @@ namespace WEB.Services
         }
         public IQueryable<Contact> GetContactsId(Guid id)
         {
-
+            return GetContacts().Where(x => x.UserId == id);
         }
         public Contact GetContactsName(string Name)
         {
@@ -39,6 +39,11 @@ namespace WEB.Services
             _contactcontext.SaveChanges();
 
             return contact;
+        }
+
+        public int GetAmountByUserId(Guid id)
+        {
+            return GetContactsId(id).Count();
         }
 
         public void Delete(int Id)

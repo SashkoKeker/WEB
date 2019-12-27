@@ -10,8 +10,8 @@ namespace WEB.Interfaces
     {
         IQueryable<Chat> GetChat();
         Chat GetChatId(int id);
-        IQueryable<Chat> GetChatUsersId(Guid id, Guid idd);        
-        Chat CreateChat(Chat contact);
+        IQueryable<Chat> GetChatUsersId(Guid id);        
+        Chat CreateMChat(Chat chat);
         void Delete(int id);
     }
 }

@@ -15,6 +15,7 @@ namespace WEB.Models
         public DbSet<OrderType> orderTypes { get; set; }
         public DbSet<Chat> chats { get; set; }
         public DbSet<Contact> contacts { get; set; }
+        public DbSet<Profile> Profiles { get; set; }
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {
             Database.EnsureDeleted();
@@ -37,10 +38,7 @@ namespace WEB.Models
             modelBuilder.Entity<Order>()
                 .HasKey(u => u.OrderId);
 
-            modelBuilder.Entity<Order>()
-                .Property(p => p.OrderId)
-                .IsRequired()
-                .ValueGeneratedOnAdd();
+
             /////////////////////////////////////////////
             modelBuilder.Entity<OrderType>()
                 .HasKey(u => u.OrderTypeId);

@@ -16,7 +16,7 @@ namespace WEB.Models
         public List<Order> orders { get; set; }
         public List<Contact> contacts { get; set; }
         public List<Contact> contactes { get; set; }
-
+        public Profile Profile { get; set; }
         public User()
         {
             UserRoles = new List<UserRole>();
