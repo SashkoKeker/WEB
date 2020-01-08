@@ -24,7 +24,7 @@ namespace WEB.Services
         {
             return GetContacts().Single(x => x.ContactId == id);
         }
-        public IQueryable<Contact> GetContactsId(Guid id)
+        public IQueryable<Contact> GetContactsId(string id)
         {
             return GetContacts().Where(x => x.UserId == id);
         }
@@ -41,7 +41,7 @@ namespace WEB.Services
             return contact;
         }
 
-        public int GetAmountByUserId(Guid id)
+        public int GetAmountByUserId(string id)
         {
             return GetContactsId(id).Count();
         }

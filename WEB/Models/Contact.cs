@@ -13,10 +13,10 @@ namespace WEB.Models
 
         public List<Chat> chats { get; set; }
 
-        public Guid UserId { get; set; }
+        public string UserId { get; set; }
         public User userss { get; set; }
 
-        public Guid ContactUserId { get; set; }
+        public string ContactUserId { get; set; }
         public User useres { get; set; }
 
     }

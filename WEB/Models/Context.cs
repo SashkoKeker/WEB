@@ -56,8 +56,8 @@ namespace WEB.Models
 
 
             /////////////////////////////////////
-            modelBuilder.Entity<Contact>()
-                .HasKey(u => u.ContactId);
+/*            modelBuilder.Entity<Contact>()
+              .HasKey(u => u.ContactId);    
 
 
             ////////////////
@@ -73,19 +73,25 @@ namespace WEB.Models
             modelBuilder.Entity<Chat>()
                 .HasOne(p => p.contacs)
                 .WithMany(t => t.chats)
-                .HasForeignKey(p => p.ChatId);
+                .HasForeignKey(p => p.ChatId)
+                .OnDelete(DeleteBehavior.Cascade);*/
             ////////////////////////////////////////////
 
-            modelBuilder.Entity<Contact>()
+
+
+/*            modelBuilder.Entity<Contact>()
                 .HasOne(p => p.userss)
                 .WithMany(t => t.contacts)
                 .HasForeignKey(p => p.UserId);
+
+
 
 
             modelBuilder.Entity<Contact>()
                 .HasOne(q => q.useres)
                 .WithMany(t => t.contactes)
                 .HasForeignKey(q => q.ContactUserId);
+                */
             ///////////////////////////////////////////////////////////
 
 

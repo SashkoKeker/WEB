@@ -7,7 +7,7 @@ using WEB.Interfaces;
 
 namespace WEB.Services
 {
-    public class ChatServices
+    public class ChatServices : IChatServices
     {
 
         private readonly ApplicationContext _chatcontext;
@@ -51,6 +51,10 @@ namespace WEB.Services
             var id = GetChatId(idd);
             var contact = _chatcontext.contacts.Where(x => x.ContactId == idd);
             //chat.ChatUserId= contact.
+        }
+        public void Delete(int id)
+        {
+
         }
     }
 }

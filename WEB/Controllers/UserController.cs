@@ -1,150 +1,104 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Net;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using WEB.DTO;
 using WEB.Models;
-
+using WEB.Services;
+using WEB.Interfaces;
 namespace WEB.Controllers
 {
     [Route("api/[controller]")]
-    public class AccountController : ControllerBase
+    [ApiController]
+    public class UserController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly TokenSettings _appSettings;
-        private readonly ApplicationContext _context;
+        private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly UserManager<User> _userManager;
 
-        public AccountController(UserManager<User> userManager, IMapper mapper, IOptions<TokenSettings> applicationSettings, ApplicationContext context)
+        public UserController(IUserService userservice, IMapper mapper, UserManager<User> userManager)
         {
-            _context = context;
-            _userManager = userManager;
-            _appSettings = applicationSettings.Value;
+            _userService = userservice;
             _mapper = mapper;
+            _userManager = userManager;
         }
 
-        [HttpGet("Claims")]
-        public IActionResult GetClaims()
+        //[Authorize(Roles = "Admin, Moderator")]
+        [HttpGet("Read")]
+        public IActionResult GetAll()
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            IEnumerable<Claim> claims = identity.Claims;
-            var claim = claims.First(x => x.Type == "UserID");
-            return Ok(claim);
+            var users = _userService.GetAll();
+            return Ok(_mapper.Map<IEnumerable<UserDto>>(users));
         }
 
-        [HttpPost("Registration")]
-        public async Task<IActionResult> Register([FromBody]UserRegistration model)
+        [Authorize(Roles = "User")]
+        [HttpGet("FindByLogin")]
+        public IActionResult FindByLogin(string login)
         {
-            if (ModelState.IsValid)
-            {
-               
-                var user = new User { Email = model.Email, UserName = model.Email };
-                var result = await _userManager.CreateAsync(user, model.Password);
-                var profile = new Models.Profile { UserId = user.Id, NickName = model.NickName };
-                _context.Profiles.Add(profile);
-                _context.SaveChanges();
-                _context.Users.Find(user.Id).Profile = profile;
-                _context.SaveChanges();
-                if (!result.Succeeded)
-                {
-                    return BadRequest(result.Errors);
-                }
-                await _userManager.AddToRoleAsync(user, "user");
-                return Created("", "Пользователь успешно создан.");
-            }
-            else
-            {
-                return StatusCode((int)HttpStatusCode.BadRequest);
-            }
+            return Ok(_mapper.Map<UserDto>(_userService.GetByLogin(login)));
         }
 
-        [HttpGet("Moderators")]
-        public async Task<IActionResult> GetModerators()
+        [Authorize(Roles = "Admin")]
+        [HttpGet("FindById")]
+        public IActionResult FindById(Guid Id)
         {
-            var moderators = await _userManager.GetUsersInRoleAsync("moderator");
-            var _moderators = _mapper.Map<IEnumerable<UserDto>>(moderators);
-            return Ok(_moderators);
+            return Ok(_mapper.Map<UserDto>(_userService.GetById(Id)));
         }
 
-        [HttpGet("Users")]
-        public async Task<IActionResult> GetUsers()
+        [Authorize(Roles = "Admin")]
+        [HttpGet("CreateModerator/{id}")]
+        public async Task<IActionResult> CreateModerator(Guid id)
         {
-            var users = await _userManager.GetUsersInRoleAsync("User");
-            var _users = _mapper.Map<IEnumerable<UserDto>>(users);
-            return Ok(_users);
+            var user = _userService.GetById(id);
+            await _userManager.RemoveFromRoleAsync(user, "user");
+            await _userManager.AddToRoleAsync(user, "moderator");
+
+            return Ok("Роль указанного пользователя успешно изменена.");
         }
 
-        [HttpPost("Authorization")]
-        public async Task<IActionResult> Authenticate([FromBody]UserAuthorization model)
+        [Authorize(Roles = "Admin")]
+        [HttpGet("CreateProUser")]
+        public async Task<IActionResult> CreateProUser(Guid id)
         {
-            var user = await this._userManager.FindByEmailAsync(model.Email);
-            var roleId = _context.UserRoles.First(x => x.UserId == user.Id).RoleId;
-            var role = _context.Roles.First(x => x.Id == roleId).Name;
+            var user = _userService.GetById(id);
+            await _userManager.RemoveFromRoleAsync(user, "user");
+            await _userManager.AddToRoleAsync(user, "prouser");
 
-            if (user == null)
-            {
-                return BadRequest(new { message = "Username or password is incorrect!" });
-            }
-
-            var claims = new List<Claim>();
-            claims.Add(new Claim("UserID", user.Id.ToString()));
-            claims.Add(new Claim(ClaimTypes.Role, role));
-
-
-            if (await this._userManager.CheckPasswordAsync(user, model.Password))
-            {
-                var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("MySp$cialPassw0rd"));
-                var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-
-                var token = new JwtSecurityToken(
-                    issuer: "https://localhost:5000",
-                    audience: "https://localhost:5000",
-                    claims: claims,
-                    expires: DateTime.Now.AddDays(30),
-                    signingCredentials: signinCredentials
-                );
-
-                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-                return Ok(new
-                {
-                    Token = tokenString,
-                    ExpiresIn = token.ValidTo,
-                    Email = user.Email,
-                    Id = user.Id
-                });
-            }
-
-            return Unauthorized();
+            return Ok("Роль указанного пользователя успешно изменена.");
         }
 
-        [HttpGet("roles")]
-        public async Task<IActionResult> GetRoles()
+        [Authorize(Roles = "Admin")]
+        [HttpGet("DeleteModerator/{id}")]
+        public async Task<IActionResult> RemoveModerator(Guid id)
         {
-            IList<string> roles = new List<string> { "Роль не определена" };
-            User user = _context.Users.First(x => x.UserName == "admin");
-            if (user != null)
-                roles = await _userManager.GetRolesAsync(user);
-            return Ok(roles);
+            var user = _userService.GetById(id);
+            await _userManager.RemoveFromRoleAsync(user, "moderator");
+            await _userManager.AddToRoleAsync(user, "user");
+
+            return Ok("Роль указанного пользователя успешно изменена.");
         }
 
-        [HttpGet("roles/{email}")]
-        public async Task<IActionResult> GetRolesByEmail(string email)
+        [Authorize(Roles = "Admin")]
+        [HttpGet("DeleteProUser")]
+        public async Task<IActionResult> RemoveProUser(Guid id)
         {
-            IList<string> roles = new List<string> { "Роль не определена" };
-            User user = _context.Users.First(x => x.Email == email);
-            if (user != null)
-                roles = await _userManager.GetRolesAsync(user);
-            return Ok(roles);
+            var user = _userService.GetById(id);
+            await _userManager.RemoveFromRoleAsync(user, "prouser");
+            await _userManager.AddToRoleAsync(user, "user");
+
+            return Ok("Роль указанного пользователя успешно изменена.");
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("Delete/{id}")]
+        public IActionResult DeleteAccount(Guid id)
+        {
+            _userService.Delete(id);
+            return StatusCode((int)HttpStatusCode.NoContent);
         }
     }
 }

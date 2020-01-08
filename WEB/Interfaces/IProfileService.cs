@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using WEB.Models;
 namespace WEB.Interfaces
 {
-    interface IProfileService
+    public interface IProfileService
     {
         Profile GetProfileById(Guid id);
         Profile CreateProfile(Profile profile);

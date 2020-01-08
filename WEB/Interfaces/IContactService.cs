@@ -10,10 +10,10 @@ namespace WEB.Interfaces
     {
         IQueryable<Contact> GetContacts();
         Contact GetContactId(int id);
-        IQueryable<Contact> GetContactsId(Guid id);
+        IQueryable<Contact> GetContactsId(string id);
         Contact GetContactsName(string Name);
         Contact CreateContact(Contact contact);
-        int GetAmountByUserId(Guid id);
+        int GetAmountByUserId(string id);
         void Delete(int id);
 
     }

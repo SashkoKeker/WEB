@@ -6,7 +6,7 @@ using WEB.Models;
 
 namespace WEB.Interfaces
 {
-    interface IOrderService
+    public interface IOrderService
     {
         IQueryable<Order> GetAll();
         Order GetById(Guid id);
